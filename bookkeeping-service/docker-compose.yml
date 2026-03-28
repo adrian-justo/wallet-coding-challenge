@@ -1,0 +1,6 @@
+include:
+  - database.yml
+    
+networks:
+  bookkeeping-net:
+    driver: bridge

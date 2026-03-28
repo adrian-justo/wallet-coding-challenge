@@ -1,0 +1,19 @@
+services:
+  mysql:
+    image: mysql:9
+    container_name: mysql
+    environment:
+      MYSQL_DATABASE: bookkeeping_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: ${DB_PASSWORD:-pass}
+      MYSQL_ROOT_PASSWORD: ${DB_RTPASSWORD:-rootpass}
+    ports:
+      - 3306:3306
+    restart: unless-stopped
+    networks:
+      - bookkeeping-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${MYSQL_USER}", "-p", "${MYSQL_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: "@project.name@"
+    version: "@project.version@"
+  mvc.apiversion:
+    use.path-segment: 1
+    supported:
+      - 1
+    default: 1
+  datasource:
+    url: jdbc:mysql://host.docker.internal:3306/bookkeeping_db
+    username: user
+    password: pass
+  jpa:
+    show-sql: true
+    properties:
+      '[hibernate.format_sql]': true
+
+server.port: 8080
+
+logging.level:
+  '[org.hibernate.orm.jdbc.bind]': trace
+  
+management:
+  endpoints.web:
+    exposure.include: health,info
+  endpoint.health:
+    show-details: always  
+
+springdoc:
+  swagger-ui:
+    path: /docs
+  api-docs:
+    path: /docs/api
+
+application.description: "@project.description@"
+server.url: ${SERVER_URL:http://localhost:8080}
