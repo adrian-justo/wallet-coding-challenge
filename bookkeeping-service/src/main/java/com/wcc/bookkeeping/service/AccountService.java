@@ -1,5 +1,7 @@
 package com.wcc.bookkeeping.service;
 
+import java.math.BigDecimal;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -7,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.wcc.bookkeeping.dto.AccountResponse;
 import com.wcc.bookkeeping.dto.CreateAccountRequest;
 import com.wcc.bookkeeping.dto.Paged;
+import com.wcc.bookkeeping.exception.ResourceNotFoundException;
 import com.wcc.bookkeeping.repository.AccountRepository;
 import com.wcc.bookkeeping.util.Mapper;
 
@@ -30,7 +33,13 @@ class AccountService implements IAccountService {
 	@Override
 	@Transactional(readOnly = true)
 	public Paged<AccountResponse> getAccounts(final Pageable pageable) {
-		return new Paged<>(repository.findAll(pageable).map(Mapper::toResponse));
+		return new Paged<>(repository.findAll(pageable).map(Mapper::toAuditResponse));
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public BigDecimal findBalanceBy(final String id) {
+		return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Account")).getBalance();
 	}
 
 }

@@ -1,7 +1,10 @@
 package com.wcc.bookkeeping;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.math.BigDecimal;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +28,8 @@ import com.wcc.bookkeeping.dto.Paged;
 class BookkeepingServiceApplicationTests {
 
 	private static final String ACCOUNTS_PATH = "/accounts";
+
+	private static final String ACCOUNT_ID_PATH = "/Joemar";
 
 	private RestTestClient client;
 
@@ -70,7 +75,17 @@ class BookkeepingServiceApplicationTests {
 			.isOk()
 			.expectBody(new ParameterizedTypeReference<Paged<AccountResponse>>() {
 			})
-			.consumeWith(result -> System.out.println(result.getResponseBody()));
+			.consumeWith(result -> assertNotNull(result.getResponseBody()));
+	}
+
+	@Test
+	void shouldReturnBalance() {
+		client.get()
+			.uri(ACCOUNTS_PATH + ACCOUNT_ID_PATH + "/balance")
+			.exchange()
+			.expectStatus()
+			.isOk()
+			.expectBody(BigDecimal.class);
 	}
 
 }

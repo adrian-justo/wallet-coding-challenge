@@ -1,10 +1,13 @@
 package com.wcc.bookkeeping.controller;
 
+import java.math.BigDecimal;
+
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,6 +19,7 @@ import com.wcc.bookkeeping.dto.AccountResponse;
 import com.wcc.bookkeeping.dto.CreateAccountRequest;
 import com.wcc.bookkeeping.dto.Paged;
 import com.wcc.bookkeeping.service.IAccountService;
+import com.wcc.bookkeeping.util.PathValidator;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -50,6 +54,17 @@ public class AccountController {
 	public Paged<AccountResponse> getAllAccounts(
 			@ParameterObject @PageableDefault(page = 0, size = 10) final Pageable pageable) {
 		return service.getAccounts(pageable);
+	}
+
+	@Operation(summary = "Account Balance", description = "View balance of an account")
+	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Balance" + AppConstants.MSG_OK),
+			@ApiResponse(responseCode = "400", description = AppConstants.MSG_BAD_REQUEST, content = @Content),
+			@ApiResponse(responseCode = "404", description = "Account" + AppConstants.MSG_NOT_FOUND,
+					content = @Content) })
+	@GetMapping(value = "/{accountId}/balance", version = "1")
+	public BigDecimal getBalanceById(@PathVariable final String accountId) {
+		PathValidator.accountId(accountId);
+		return service.findBalanceBy(accountId);
 	}
 
 }

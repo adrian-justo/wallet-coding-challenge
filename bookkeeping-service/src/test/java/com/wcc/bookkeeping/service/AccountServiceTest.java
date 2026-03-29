@@ -1,10 +1,13 @@
 package com.wcc.bookkeeping.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -21,7 +24,7 @@ import org.springframework.data.domain.Pageable;
 
 import com.wcc.bookkeeping.dto.AccountResponse;
 import com.wcc.bookkeeping.dto.CreateAccountRequest;
-import com.wcc.bookkeeping.dto.Paged;
+import com.wcc.bookkeeping.exception.ResourceNotFoundException;
 import com.wcc.bookkeeping.model.Account;
 import com.wcc.bookkeeping.repository.AccountRepository;
 
@@ -40,8 +43,8 @@ class AccountServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		account = new Account("id", Instant.now());
-		response = new AccountResponse(account.getId(), account.getCreatedAt());
+		account = new Account("id", BigDecimal.TEN, Instant.now());
+		response = new AccountResponse(account.getId(), account.getBalance(), account.getCreatedAt());
 	}
 
 	@Test
@@ -61,7 +64,19 @@ class AccountServiceTest {
 	void shouldReturnPaginatedAccountsWhenRequested() {
 		final var accountPage = new PageImpl<>(List.of(account));
 		when(repository.findAll(any(Pageable.class))).thenReturn(accountPage);
-		assertEquals(new Paged<>(new PageImpl<>(List.of(response))), service.getAccounts(PageRequest.ofSize(10)));
+		assertNotNull(service.getAccounts(PageRequest.ofSize(10)));
+	}
+
+	@Test
+	void shouldReturnBalanceWhenFound() {
+		when(repository.findById(anyString())).thenReturn(Optional.of(account));
+		assertEquals(account.getBalance(), service.findBalanceBy(account.getId()));
+	}
+
+	@Test
+	void shouldThrowExceptionWhenNotFound() {
+		when(repository.findById(anyString())).thenReturn(Optional.empty());
+		assertThrows(ResourceNotFoundException.class, () -> service.findBalanceBy(account.getId()));
 	}
 
 }

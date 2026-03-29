@@ -1,5 +1,6 @@
 create table account (
     id varchar(255) primary key,
+    balance decimal(19,2) not null,
     created_at datetime(6) not null
 );
 

@@ -1,5 +1,7 @@
 package com.wcc.bookkeeping.service;
 
+import java.math.BigDecimal;
+
 import org.springframework.data.domain.Pageable;
 
 import com.wcc.bookkeeping.dto.AccountResponse;
@@ -11,5 +13,7 @@ public interface IAccountService {
 	AccountResponse createAccount(CreateAccountRequest request);
 
 	Paged<AccountResponse> getAccounts(Pageable pageable);
+
+	BigDecimal findBalanceBy(String id);
 
 }

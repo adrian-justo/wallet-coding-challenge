@@ -1,8 +1,10 @@
 package com.wcc.bookkeeping.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -40,7 +42,7 @@ class AccountControllerTest {
 
 	@BeforeEach
 	void setUp() {
-		account = new AccountResponse("id", Instant.now());
+		account = new AccountResponse("id", BigDecimal.TEN, Instant.now());
 		client = RestTestClient.bindTo(mvc)
 			.baseUrl("/api")
 			.apiVersionInserter(ApiVersionInserter.usePathSegment(1))
@@ -49,7 +51,7 @@ class AccountControllerTest {
 	}
 
 	@Test
-	void shouldReturnAccountWhenCreated() {
+	void shouldReturnAccountWhenCalled() {
 		when(service.createAccount(any(CreateAccountRequest.class))).thenReturn(account);
 		client.post()
 			.uri(ACCOUNTS_PATH)
@@ -73,6 +75,18 @@ class AccountControllerTest {
 			.expectBody(new ParameterizedTypeReference<Paged<AccountResponse>>() {
 			})
 			.isEqualTo(pagedAccounts);
+	}
+
+	@Test
+	void shouldReturnBalanceWhenAccountExists() {
+		when(service.findBalanceBy(anyString())).thenReturn(account.balance());
+		client.get()
+			.uri(ACCOUNTS_PATH + '/' + account.id() + "/balance")
+			.exchange()
+			.expectStatus()
+			.isOk()
+			.expectBody(BigDecimal.class)
+			.isEqualTo(account.balance());
 	}
 
 }
