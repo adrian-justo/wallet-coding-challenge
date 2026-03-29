@@ -13,7 +13,7 @@ services:
     networks:
       - bookkeeping-net
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${MYSQL_USER}", "-p", "${MYSQL_PASSWORD}"]
+      test: mysql --user=$$MYSQL_USER --password=$$MYSQL_PASSWORD --execute="SHOW DATABASES;"
       interval: 5s
       timeout: 5s
       retries: 5

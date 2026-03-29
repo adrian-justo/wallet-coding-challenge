@@ -2,6 +2,7 @@ package com.wcc.bookkeeping.model;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -13,7 +14,7 @@ import jakarta.persistence.Id;
 public class Transaction {
 
 	@Id
-	private String id;
+	private final String id;
 
 	@Column(nullable = false)
 	private String accountId;
@@ -21,25 +22,26 @@ public class Transaction {
 	@Column(nullable = false)
 	private BigDecimal amount;
 
+	@Column(nullable = false)
+	private String groupId;
+
 	@CreationTimestamp
 	private Instant createdAt;
 
 	public Transaction() {
+		id = UUID.randomUUID().toString();
 	}
 
-	public Transaction(final String id, final String accountId, final BigDecimal amount, final Instant createdAt) {
-		this.id = id;
+	public Transaction(final String accountId, final BigDecimal amount, final String groupId, final Instant createdAt) {
+		this();
 		this.accountId = accountId;
 		this.amount = amount;
+		this.groupId = groupId;
 		this.createdAt = createdAt;
 	}
 
 	public String getId() {
 		return id;
-	}
-
-	public void setId(final String id) {
-		this.id = id;
 	}
 
 	public String getAccountId() {
@@ -56,6 +58,14 @@ public class Transaction {
 
 	public void setAmount(final BigDecimal amount) {
 		this.amount = amount;
+	}
+
+	public String getGroupId() {
+		return groupId;
+	}
+
+	public void setGroupId(final String groupId) {
+		this.groupId = groupId;
 	}
 
 	public Instant getCreatedAt() {

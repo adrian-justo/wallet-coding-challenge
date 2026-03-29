@@ -1,36 +1,76 @@
 package com.wcc.bookkeeping;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.test.web.servlet.client.RestTestClient;
+import org.springframework.web.client.ApiVersionInserter;
 import org.testcontainers.mysql.MySQLContainer;
+
+import com.wcc.bookkeeping.dto.AccountResponse;
+import com.wcc.bookkeeping.dto.CreateAccountRequest;
+import com.wcc.bookkeeping.dto.Paged;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureRestTestClient
 class BookkeepingServiceApplicationTests {
+
+	private static final String ACCOUNTS_PATH = "/accounts";
+
+	private RestTestClient client;
 
 	@LocalServerPort
 	private int port;
-
-	private RestTestClient client;
 
 	@Autowired
 	private MySQLContainer db;
 
 	@BeforeEach
 	void setup() {
-		client = RestTestClient.bindToServer().baseUrl("http://localhost:" + port).build();
+		client = RestTestClient.bindToServer()
+			.baseUrl("http://localhost:%d/api".formatted(port))
+			.apiVersionInserter(ApiVersionInserter.usePathSegment(1))
+			.defaultApiVersion("v1")
+			.build();
 	}
 
 	@Test
 	void connectionEstablished() {
 		assertTrue(db.isRunning());
+	}
+
+	@Test
+	void shouldCreateAccountSuccessfully() {
+		final var id = "new";
+		client.post()
+			.uri(ACCOUNTS_PATH)
+			.body(new CreateAccountRequest(id))
+			.exchange()
+			.expectStatus()
+			.isCreated()
+			.expectBody(AccountResponse.class)
+			.consumeWith(result -> assertEquals(id, result.getResponseBody().id()));
+	}
+
+	@Test
+	void shouldReturnPaginatedAccounts() {
+		client.get()
+			.uri(ACCOUNTS_PATH)
+			.exchange()
+			.expectStatus()
+			.isOk()
+			.expectBody(new ParameterizedTypeReference<Paged<AccountResponse>>() {
+			})
+			.consumeWith(result -> System.out.println(result.getResponseBody()));
 	}
 
 }

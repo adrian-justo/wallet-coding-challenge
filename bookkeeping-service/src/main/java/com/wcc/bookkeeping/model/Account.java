@@ -19,8 +19,12 @@ public class Account {
 	public Account() {
 	}
 
-	public Account(final String id, final Instant createdAt) {
+	public Account(final String id) {
 		this.id = id;
+	}
+
+	public Account(final String id, final Instant createdAt) {
+		this(id);
 		this.createdAt = createdAt;
 	}
 
