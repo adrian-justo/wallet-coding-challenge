@@ -93,6 +93,7 @@ class AccountServiceTest {
 
 	@Test
 	void shouldSaveWhenAccountsNotExists() {
+		when(repository.existsById(anyString())).thenReturn(false);
 		service.createAccountsIfNotExists(account.getId(), account.getId());
 		verify(creator, times(2)).save(any(CreateAccountRequest.class));
 	}

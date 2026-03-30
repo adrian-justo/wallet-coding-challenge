@@ -1,1 +1,9 @@
+name: wallet-coding-challenge
 
+include:
+  - app.yml
+  - ../bookkeeping-service/database.yml
+
+networks:
+  bookkeeping-net:
+    external: true

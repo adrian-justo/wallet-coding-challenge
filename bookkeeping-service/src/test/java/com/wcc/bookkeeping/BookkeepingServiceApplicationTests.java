@@ -6,6 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -121,13 +125,64 @@ class BookkeepingServiceApplicationTests {
 	void shouldReturnTransferTransactions() {
 		client.post()
 			.uri(TRANSACTIONS_PATH + "/transfer")
-			.body(new BalanceTransferRequest("Joemar", "destinationAccount", BigDecimal.TEN))
+			.body(new BalanceTransferRequest("Joemar", "new", BigDecimal.TEN))
 			.exchange()
 			.expectStatus()
 			.isCreated()
 			.expectBody(new ParameterizedTypeReference<List<TransactionResponse>>() {
 			})
 			.consumeWith(result -> assertNotNull(result.getResponseBody()));
+	}
+
+	@Test
+	void shouldReturnCorrectBalanceOnConcurrentTransfers() throws Exception {
+		final var source = "Adrian";
+		final var sourceBalStart = client.get()
+			.uri(ACCOUNTS_PATH + '/' + source + "/balance")
+			.exchange()
+			.expectStatus()
+			.isOk()
+			.expectBody(BigDecimal.class)
+			.returnResult()
+			.getResponseBody();
+		final var destination = "destinationAccount";
+
+		final var calls = 5;
+		try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+			final var latch = new CountDownLatch(calls);
+			final Callable<Integer> task = () -> {
+				try {
+					return client.post()
+						.uri(TRANSACTIONS_PATH + "/transfer")
+						.body(new BalanceTransferRequest(source, destination, BigDecimal.TEN))
+						.exchange()
+						.returnResult()
+						.getStatus()
+						.value();
+				}
+				finally {
+					latch.countDown();
+				}
+			};
+
+			IntStream.range(0, calls).forEach(_ -> executor.submit(task));
+			latch.await();
+		}
+
+		client.get()
+			.uri(ACCOUNTS_PATH + '/' + source + "/balance")
+			.exchange()
+			.expectStatus()
+			.isOk()
+			.expectBody(BigDecimal.class)
+			.isEqualTo(sourceBalStart.subtract(BigDecimal.TEN.multiply(BigDecimal.valueOf(calls))));
+		client.get()
+			.uri(ACCOUNTS_PATH + '/' + destination + "/balance")
+			.exchange()
+			.expectStatus()
+			.isOk()
+			.expectBody(BigDecimal.class)
+			.isEqualTo(BigDecimal.TEN.multiply(BigDecimal.valueOf(calls)).setScale(2));
 	}
 
 }

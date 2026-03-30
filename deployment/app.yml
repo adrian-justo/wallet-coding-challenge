@@ -1,0 +1,15 @@
+services:
+  bookkeeping-service:
+    build: ../bookkeeping-service
+    container_name: bookkeeping-service
+    ports: 
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/bookkeeping_db
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: 
+      - bookkeeping-net

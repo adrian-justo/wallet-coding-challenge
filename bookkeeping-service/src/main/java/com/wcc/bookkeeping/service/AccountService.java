@@ -64,8 +64,12 @@ class AccountService implements IAccountService {
 
 	@Override
 	public void createAccountsIfNotExists(final String sourceAccount, final String destinationAccount) {
-		save(new CreateAccountRequest(sourceAccount));
-		save(new CreateAccountRequest(destinationAccount));
+		if (!existsAccount(sourceAccount)) {
+			save(new CreateAccountRequest(sourceAccount));
+		}
+		if (!existsAccount(destinationAccount)) {
+			save(new CreateAccountRequest(destinationAccount));
+		}
 	}
 
 }
