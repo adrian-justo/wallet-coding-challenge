@@ -18,4 +18,6 @@ public interface IAccountService {
 
 	boolean existsAccount(String id);
 
+	void createAccountsIfNotExists(String sourceAccount, String destinationAccount);
+
 }

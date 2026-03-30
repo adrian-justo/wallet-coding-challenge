@@ -2,6 +2,7 @@ package com.wcc.bookkeeping.service;
 
 import java.math.BigDecimal;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +11,7 @@ import com.wcc.bookkeeping.dto.AccountResponse;
 import com.wcc.bookkeeping.dto.CreateAccountRequest;
 import com.wcc.bookkeeping.dto.Paged;
 import com.wcc.bookkeeping.exception.ResourceNotFoundException;
+import com.wcc.bookkeeping.model.Account;
 import com.wcc.bookkeeping.repository.AccountRepository;
 import com.wcc.bookkeeping.util.Mapper;
 
@@ -19,15 +21,26 @@ class AccountService implements IAccountService {
 
 	private final AccountRepository repository;
 
-	public AccountService(final AccountRepository repository) {
+	private final AccountCreator creator;
+
+	public AccountService(final AccountRepository repository, final AccountCreator creator) {
 		this.repository = repository;
+		this.creator = creator;
 	}
 
 	@Override
 	public AccountResponse createAccount(final CreateAccountRequest request) {
-		final var account = repository.findById(request.id())
-			.orElseGet(() -> repository.save(Mapper.toEntity(request)));
-		return Mapper.toResponse(account);
+		final var account = save(request);
+		return Mapper.toResponse(account == null ? repository.findByIdForUpdate(request.id()).orElseThrow() : account);
+	}
+
+	private Account save(final CreateAccountRequest request) {
+		try {
+			return creator.save(request);
+		}
+		catch (final DataIntegrityViolationException _) {
+			return null;
+		}
 	}
 
 	@Override
@@ -37,15 +50,22 @@ class AccountService implements IAccountService {
 	}
 
 	@Override
-	@Transactional(readOnly = true)
 	public BigDecimal findBalanceBy(final String id) {
-		return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Account")).getBalance();
+		return repository.findByIdForUpdate(id)
+			.orElseThrow(() -> new ResourceNotFoundException("Account"))
+			.getBalance();
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public boolean existsAccount(final String id) {
 		return repository.existsById(id);
+	}
+
+	@Override
+	public void createAccountsIfNotExists(final String sourceAccount, final String destinationAccount) {
+		save(new CreateAccountRequest(sourceAccount));
+		save(new CreateAccountRequest(destinationAccount));
 	}
 
 }

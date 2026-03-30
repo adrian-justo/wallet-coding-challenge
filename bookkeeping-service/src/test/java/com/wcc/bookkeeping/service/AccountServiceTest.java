@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -18,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +41,9 @@ class AccountServiceTest {
 	@Mock
 	private AccountRepository repository;
 
+	@Mock
+	private AccountCreator creator;
+
 	@InjectMocks
 	private AccountService service;
 
@@ -49,14 +55,14 @@ class AccountServiceTest {
 
 	@Test
 	void shouldReturnNewAccountWhenCreateSuccessful() {
-		when(repository.findById(anyString())).thenReturn(Optional.empty());
-		when(repository.save(any(Account.class))).thenReturn(account);
+		when(creator.save(any(CreateAccountRequest.class))).thenReturn(account);
 		assertEquals(response, service.createAccount(new CreateAccountRequest(account.getId())));
 	}
 
 	@Test
 	void shouldReturnSameAccountWhenAlreadyCreated() {
-		when(repository.findById(anyString())).thenReturn(Optional.of(account));
+		when(creator.save(any(CreateAccountRequest.class))).thenThrow(DataIntegrityViolationException.class);
+		when(repository.findByIdForUpdate(anyString())).thenReturn(Optional.of(account));
 		assertEquals(response, service.createAccount(new CreateAccountRequest(account.getId())));
 	}
 
@@ -69,13 +75,13 @@ class AccountServiceTest {
 
 	@Test
 	void shouldReturnBalanceWhenFound() {
-		when(repository.findById(anyString())).thenReturn(Optional.of(account));
+		when(repository.findByIdForUpdate(anyString())).thenReturn(Optional.of(account));
 		assertEquals(account.getBalance(), service.findBalanceBy(account.getId()));
 	}
 
 	@Test
 	void shouldThrowExceptionDuringReturnBalanceWhenNotFound() {
-		when(repository.findById(anyString())).thenReturn(Optional.empty());
+		when(repository.findByIdForUpdate(anyString())).thenReturn(Optional.empty());
 		assertThrows(ResourceNotFoundException.class, () -> service.findBalanceBy("nonExistent"));
 	}
 
@@ -83,6 +89,12 @@ class AccountServiceTest {
 	void shouldReturnTrueWhenAccountExists() {
 		when(repository.existsById(anyString())).thenReturn(true);
 		assertEquals(true, service.existsAccount(account.getId()));
+	}
+
+	@Test
+	void shouldSaveWhenAccountsNotExists() {
+		service.createAccountsIfNotExists(account.getId(), account.getId());
+		verify(creator, times(2)).save(any(CreateAccountRequest.class));
 	}
 
 }

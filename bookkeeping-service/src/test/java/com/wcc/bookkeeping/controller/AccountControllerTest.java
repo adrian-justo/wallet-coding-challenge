@@ -57,7 +57,7 @@ class AccountControllerTest {
 	}
 
 	@Test
-	void shouldReturnAccountWhenCalled() {
+	void shouldReturnAccountWhenCreated() {
 		when(service.createAccount(any(CreateAccountRequest.class))).thenReturn(account);
 		client.post()
 			.uri(ACCOUNTS_PATH)

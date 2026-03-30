@@ -6,6 +6,8 @@ import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 
+import com.wcc.bookkeeping.constant.AppConstants;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -19,7 +21,7 @@ public class Transaction {
 	@Column(nullable = false)
 	private String accountId;
 
-	@Column(nullable = false)
+	@Column(nullable = false, precision = AppConstants.AMOUNT_PRECISION, scale = AppConstants.AMOUNT_SCALE)
 	private BigDecimal amount;
 
 	@Column(nullable = false)
@@ -32,11 +34,16 @@ public class Transaction {
 		id = UUID.randomUUID().toString();
 	}
 
-	public Transaction(final String accountId, final BigDecimal amount, final String groupId, final Instant createdAt) {
+	public Transaction(final String accountId, final BigDecimal amount, final String groupId) {
 		this();
 		this.accountId = accountId;
 		this.amount = amount;
 		this.groupId = groupId;
+
+	}
+
+	public Transaction(final String accountId, final BigDecimal amount, final String groupId, final Instant createdAt) {
+		this(accountId, amount, groupId);
 		this.createdAt = createdAt;
 	}
 

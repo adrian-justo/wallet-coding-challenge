@@ -1,6 +1,8 @@
 package com.wcc.bookkeeping.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -14,13 +16,17 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.client.RestTestClient;
 import org.springframework.web.client.ApiVersionInserter;
 
+import com.wcc.bookkeeping.dto.BalanceTransferRequest;
 import com.wcc.bookkeeping.dto.Paged;
 import com.wcc.bookkeeping.dto.TransactionResponse;
+import com.wcc.bookkeeping.service.IAccountService;
 import com.wcc.bookkeeping.service.ITransactionService;
 
 @WebMvcTest(TransactionController.class)
@@ -37,6 +43,9 @@ class TransactionControllerTest {
 
 	@MockitoBean
 	private ITransactionService service;
+
+	@MockitoBean
+	private IAccountService acctService;
 
 	@BeforeEach
 	void setUp() {
@@ -60,6 +69,49 @@ class TransactionControllerTest {
 			.expectBody(new ParameterizedTypeReference<Paged<TransactionResponse>>() {
 			})
 			.isEqualTo(pagedTransactions);
+	}
+
+	@Test
+	void shouldReturnTransactionsWhenAccountExists() {
+		when(acctService.existsAccount(anyString())).thenReturn(true);
+		when(service.transferBalance(any(BalanceTransferRequest.class))).thenReturn(List.of(transaction));
+
+		client.post()
+			.uri(TRANSACTIONS_PATH + "/transfer")
+			.body(new BalanceTransferRequest("sourceAccount", "destinationAccount", BigDecimal.TEN))
+			.exchange()
+			.expectStatus()
+			.isCreated()
+			.expectBody(new ParameterizedTypeReference<List<TransactionResponse>>() {
+			})
+			.isEqualTo(List.of(transaction));
+	}
+
+	@Test
+	void shouldCreateAccountAndReturnTransactionsWhenAccountNotExists() {
+		doNothing().when(acctService).createAccountsIfNotExists(anyString(), anyString());
+		when(service.transferBalance(any(BalanceTransferRequest.class))).thenReturn(List.of(transaction));
+		client.post()
+			.uri(TRANSACTIONS_PATH + "/transfer")
+			.body(new BalanceTransferRequest("sourceAccount", "destinationAccount", BigDecimal.TEN))
+			.exchange()
+			.expectStatus()
+			.isCreated()
+			.expectBody(new ParameterizedTypeReference<List<TransactionResponse>>() {
+			})
+			.isEqualTo(List.of(transaction));
+	}
+
+	@Test
+	void shouldThrowExceptionWhenSameAccount() {
+		doNothing().when(acctService).createAccountsIfNotExists(anyString(), anyString());
+		client.post()
+			.uri(TRANSACTIONS_PATH + "/transfer")
+			.body(new BalanceTransferRequest("sourceAccount", "sourceAccount", BigDecimal.TEN))
+			.exchange()
+			.expectStatus()
+			.isEqualTo(HttpStatus.CONFLICT)
+			.expectBody(ProblemDetail.class);
 	}
 
 }

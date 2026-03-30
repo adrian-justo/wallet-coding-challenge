@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ import org.springframework.web.client.ApiVersionInserter;
 import org.testcontainers.mysql.MySQLContainer;
 
 import com.wcc.bookkeeping.dto.AccountResponse;
+import com.wcc.bookkeeping.dto.BalanceTransferRequest;
 import com.wcc.bookkeeping.dto.CreateAccountRequest;
 import com.wcc.bookkeeping.dto.Paged;
 import com.wcc.bookkeeping.dto.TransactionResponse;
@@ -100,8 +102,7 @@ class BookkeepingServiceApplicationTests {
 			.isOk()
 			.expectBody(new ParameterizedTypeReference<Paged<TransactionResponse>>() {
 			})
-			.value(System.out::println);
-		// .consumeWith(result -> assertNotNull(result.getResponseBody()));
+			.consumeWith(result -> assertNotNull(result.getResponseBody()));
 	}
 
 	@Test
@@ -113,8 +114,20 @@ class BookkeepingServiceApplicationTests {
 			.isOk()
 			.expectBody(new ParameterizedTypeReference<Paged<TransactionResponse>>() {
 			})
-			.value(System.out::println);
-		// .consumeWith(result -> assertNotNull(result.getResponseBody()));
+			.consumeWith(result -> assertNotNull(result.getResponseBody()));
+	}
+
+	@Test
+	void shouldReturnTransferTransactions() {
+		client.post()
+			.uri(TRANSACTIONS_PATH + "/transfer")
+			.body(new BalanceTransferRequest("Joemar", "destinationAccount", BigDecimal.TEN))
+			.exchange()
+			.expectStatus()
+			.isCreated()
+			.expectBody(new ParameterizedTypeReference<List<TransactionResponse>>() {
+			})
+			.consumeWith(result -> assertNotNull(result.getResponseBody()));
 	}
 
 }

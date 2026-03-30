@@ -1,8 +1,10 @@
 package com.wcc.bookkeeping.util;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import com.wcc.bookkeeping.dto.AccountResponse;
+import com.wcc.bookkeeping.dto.BalanceTransferRequest;
 import com.wcc.bookkeeping.dto.CreateAccountRequest;
 import com.wcc.bookkeeping.dto.TransactionResponse;
 import com.wcc.bookkeeping.model.Account;
@@ -24,6 +26,11 @@ public final class Mapper {
 
 	public static AccountResponse toAuditResponse(final Account entity) {
 		return new AccountResponse(entity.getId(), entity.getCreatedAt());
+	}
+
+	public static List<Transaction> toEntities(final BalanceTransferRequest request, final String groupId) {
+		return List.of(new Transaction(request.sourceAccount(), request.amount().negate(), groupId),
+				new Transaction(request.destinationAccount(), request.amount(), groupId));
 	}
 
 	public static TransactionResponse toResponse(final Transaction entity) {

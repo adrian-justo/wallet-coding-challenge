@@ -4,18 +4,21 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.domain.Persistable;
+
+import com.wcc.bookkeeping.constant.AppConstants;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 
 @Entity
-public class Account {
+public class Account implements Persistable<String> {
 
 	@Id
 	private String id;
 
-	@Column(nullable = false)
+	@Column(nullable = false, precision = AppConstants.AMOUNT_PRECISION, scale = AppConstants.AMOUNT_SCALE)
 	private BigDecimal balance;
 
 	@CreationTimestamp
@@ -56,6 +59,11 @@ public class Account {
 
 	public void setCreatedAt(final Instant createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	@Override
+	public boolean isNew() {
+		return true;
 	}
 
 }

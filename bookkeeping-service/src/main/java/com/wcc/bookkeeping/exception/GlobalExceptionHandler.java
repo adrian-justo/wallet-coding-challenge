@@ -35,6 +35,16 @@ class GlobalExceptionHandler {
 							Collectors.mapping(FieldError::getDefaultMessage, Collectors.toList()))));
 	}
 
+	@ExceptionHandler(SameAccountTransferException.class)
+	ProblemDetail handle(final SameAccountTransferException e) {
+		return getDetail(HttpStatus.CONFLICT, AppConstants.MSG_CONFLICT);
+	}
+
+	@ExceptionHandler(InsufficientFundsException.class)
+	ProblemDetail handle(final InsufficientFundsException e) {
+		return getDetail(HttpStatus.UNPROCESSABLE_CONTENT, AppConstants.MSG_UNPROCESSABLE_CONTENT);
+	}
+
 	@ExceptionHandler({ HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class })
 	ProblemDetail handle(final RuntimeException e) {
 		return getDetail(HttpStatus.BAD_REQUEST, e.getMessage());
