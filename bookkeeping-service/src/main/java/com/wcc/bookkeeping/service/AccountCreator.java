@@ -1,6 +1,6 @@
 package com.wcc.bookkeeping.service;
 
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -9,7 +9,7 @@ import com.wcc.bookkeeping.model.Account;
 import com.wcc.bookkeeping.repository.AccountRepository;
 import com.wcc.bookkeeping.util.Mapper;
 
-@Component
+@Service
 class AccountCreator {
 
 	private final AccountRepository repository;

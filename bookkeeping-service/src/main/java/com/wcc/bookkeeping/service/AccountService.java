@@ -64,11 +64,13 @@ class AccountService implements IAccountService {
 
 	@Override
 	public void createAccountsIfNotExists(final String sourceAccount, final String destinationAccount) {
-		if (!existsAccount(sourceAccount)) {
-			save(new CreateAccountRequest(sourceAccount));
-		}
-		if (!existsAccount(destinationAccount)) {
-			save(new CreateAccountRequest(destinationAccount));
+		createAccountsIfNotExists(sourceAccount);
+		createAccountsIfNotExists(destinationAccount);
+	}
+
+	private void createAccountsIfNotExists(final String id) {
+		if (!repository.existsById(id)) {
+			save(new CreateAccountRequest(id));
 		}
 	}
 
