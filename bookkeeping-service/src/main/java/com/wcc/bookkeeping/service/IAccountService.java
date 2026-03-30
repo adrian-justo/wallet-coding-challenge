@@ -16,4 +16,6 @@ public interface IAccountService {
 
 	BigDecimal findBalanceBy(String id);
 
+	boolean existsAccount(String id);
+
 }

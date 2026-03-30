@@ -15,6 +15,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ProblemDetail;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.client.RestTestClient;
@@ -23,7 +24,9 @@ import org.springframework.web.client.ApiVersionInserter;
 import com.wcc.bookkeeping.dto.AccountResponse;
 import com.wcc.bookkeeping.dto.CreateAccountRequest;
 import com.wcc.bookkeeping.dto.Paged;
+import com.wcc.bookkeeping.dto.TransactionResponse;
 import com.wcc.bookkeeping.service.IAccountService;
+import com.wcc.bookkeeping.service.ITransactionService;
 
 @WebMvcTest(AccountController.class)
 class AccountControllerTest {
@@ -39,6 +42,9 @@ class AccountControllerTest {
 
 	@MockitoBean
 	private IAccountService service;
+
+	@MockitoBean
+	private ITransactionService trxService;
 
 	@BeforeEach
 	void setUp() {
@@ -87,6 +93,33 @@ class AccountControllerTest {
 			.isOk()
 			.expectBody(BigDecimal.class)
 			.isEqualTo(account.balance());
+	}
+
+	@Test
+	void shouldReturnTransactionsWhenAccountExists() {
+		final var pagedTransactions = new Paged<>(new PageImpl<>(
+				List.of(new TransactionResponse("tx1", account.id(), BigDecimal.ONE, "grp1", Instant.now()))));
+		when(service.existsAccount(anyString())).thenReturn(true);
+		when(trxService.getTransactionsBy(anyString(), any(Pageable.class))).thenReturn(pagedTransactions);
+		client.get()
+			.uri(ACCOUNTS_PATH + '/' + account.id() + "/transactions")
+			.exchange()
+			.expectStatus()
+			.isOk()
+			.expectBody(new ParameterizedTypeReference<Paged<TransactionResponse>>() {
+			})
+			.isEqualTo(pagedTransactions);
+	}
+
+	@Test
+	void shouldThrowExceptionWhenAccountNotExists() {
+		when(service.existsAccount(anyString())).thenReturn(false);
+		client.get()
+			.uri(ACCOUNTS_PATH + '/' + account.id() + "/transactions")
+			.exchange()
+			.expectStatus()
+			.isNotFound()
+			.expectBody(ProblemDetail.class);
 	}
 
 }

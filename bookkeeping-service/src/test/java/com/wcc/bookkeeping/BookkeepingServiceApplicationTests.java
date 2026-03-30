@@ -21,6 +21,7 @@ import org.testcontainers.mysql.MySQLContainer;
 import com.wcc.bookkeeping.dto.AccountResponse;
 import com.wcc.bookkeeping.dto.CreateAccountRequest;
 import com.wcc.bookkeeping.dto.Paged;
+import com.wcc.bookkeeping.dto.TransactionResponse;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -28,6 +29,8 @@ import com.wcc.bookkeeping.dto.Paged;
 class BookkeepingServiceApplicationTests {
 
 	private static final String ACCOUNTS_PATH = "/accounts";
+
+	private static final String TRANSACTIONS_PATH = "/transactions";
 
 	private static final String ACCOUNT_ID_PATH = "/Joemar";
 
@@ -86,6 +89,32 @@ class BookkeepingServiceApplicationTests {
 			.expectStatus()
 			.isOk()
 			.expectBody(BigDecimal.class);
+	}
+
+	@Test
+	void shouldReturnPaginatedTransactionsByAccount() {
+		client.get()
+			.uri(ACCOUNTS_PATH + ACCOUNT_ID_PATH + TRANSACTIONS_PATH)
+			.exchange()
+			.expectStatus()
+			.isOk()
+			.expectBody(new ParameterizedTypeReference<Paged<TransactionResponse>>() {
+			})
+			.value(System.out::println);
+		// .consumeWith(result -> assertNotNull(result.getResponseBody()));
+	}
+
+	@Test
+	void shouldReturnPaginatedTransactions() {
+		client.get()
+			.uri(TRANSACTIONS_PATH)
+			.exchange()
+			.expectStatus()
+			.isOk()
+			.expectBody(new ParameterizedTypeReference<Paged<TransactionResponse>>() {
+			})
+			.value(System.out::println);
+		// .consumeWith(result -> assertNotNull(result.getResponseBody()));
 	}
 
 }

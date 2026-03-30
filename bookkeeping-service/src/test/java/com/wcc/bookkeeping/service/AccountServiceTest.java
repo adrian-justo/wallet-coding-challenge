@@ -62,8 +62,8 @@ class AccountServiceTest {
 
 	@Test
 	void shouldReturnPaginatedAccountsWhenRequested() {
-		final var accountPage = new PageImpl<>(List.of(account));
-		when(repository.findAll(any(Pageable.class))).thenReturn(accountPage);
+		final var accountsPage = new PageImpl<>(List.of(account));
+		when(repository.findAll(any(Pageable.class))).thenReturn(accountsPage);
 		assertNotNull(service.getAccounts(PageRequest.ofSize(10)));
 	}
 
@@ -74,9 +74,15 @@ class AccountServiceTest {
 	}
 
 	@Test
-	void shouldThrowExceptionWhenNotFound() {
+	void shouldThrowExceptionDuringReturnBalanceWhenNotFound() {
 		when(repository.findById(anyString())).thenReturn(Optional.empty());
-		assertThrows(ResourceNotFoundException.class, () -> service.findBalanceBy(account.getId()));
+		assertThrows(ResourceNotFoundException.class, () -> service.findBalanceBy("nonExistent"));
+	}
+
+	@Test
+	void shouldReturnTrueWhenAccountExists() {
+		when(repository.existsById(anyString())).thenReturn(true);
+		assertEquals(true, service.existsAccount(account.getId()));
 	}
 
 }

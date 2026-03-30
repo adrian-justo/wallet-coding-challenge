@@ -42,4 +42,10 @@ class AccountService implements IAccountService {
 		return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Account")).getBalance();
 	}
 
+	@Override
+	@Transactional(readOnly = true)
+	public boolean existsAccount(final String id) {
+		return repository.existsById(id);
+	}
+
 }
